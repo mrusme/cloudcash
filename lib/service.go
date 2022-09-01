@@ -21,4 +21,3 @@ type ServiceStatus struct {
   PreviousCharges decimal.Decimal `json:"previous_charges"`
 }
 
-

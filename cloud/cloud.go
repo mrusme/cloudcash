@@ -5,6 +5,7 @@ import (
   "strings"
 
   "text/template"
+  "fmt"
 
   "github.com/mrusme/cloudcash/lib"
 )
@@ -64,8 +65,25 @@ func (c *Cloud) Waybar(t *template.Template) (string) {
     }
   }
 
-  waybarOutput.Text = strings.Join(statuses, c.Config.WaybarPangoJoiner)
+  waybarOutput.Text = strings.Join(statuses, c.Config.Waybar.PangoJoiner)
   outputJson, _ := lib.JSONMarshal(waybarOutput)
   return string(outputJson)
+}
+
+func (c *Cloud) Text() (string) {
+  var text string = ""
+
+  for _, service := range c.Services {
+    text = fmt.Sprintf(
+      "%s%-20s$%8s  [previous: $%8s / balance: $%8s]\n",
+      text,
+      service.Name,
+      service.Status.CurrentCharges,
+      service.Status.PreviousCharges,
+      service.Status.AccountBalance,
+    )
+  }
+
+  return text
 }
 

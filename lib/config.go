@@ -14,15 +14,22 @@ type Config struct {
     DigitalOcean         struct {
       APIKey             string
     }
+    AWS                  struct {
+      AWSAccessKeyID     string
+      AWSSecretAccessKey string
+      Region             string
+    }
   }
-  WaybarPango           string
-  WaybarPangoJoiner     string
+  Waybar                 struct {
+    Pango                string
+    PangoJoiner          string
+  }
 }
 
 func Cfg() (Config, error) {
   viper.SetDefault("Service.Vultr.APIKey", "")
-  viper.SetDefault("WaybarPango", "")
-  viper.SetDefault("WaybarPangoJoiner", " · ")
+  viper.SetDefault("Waybar.Pango", "")
+  viper.SetDefault("Waybar.PangoJoiner", " · ")
 
   viper.SetConfigName("cloudcash.toml")
   viper.SetConfigType("toml")

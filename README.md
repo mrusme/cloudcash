@@ -1,18 +1,18 @@
 Cloudcash
 ---------
 
-Monitor your cloud spendings from the CLI (and from
+Check your cloud spending from the CLI (and from
 [Waybar](https://github.com/Alexays/Waybar))!
 
 ![Cloudcash on Waybar](screenshot.png)
 
-**Supported Cloud Services:**
+**Supported cloud services:**
 
 - [x] Vultr
 - [x] DigitalOcean
-- [ ] Render
+- [ ] Render *(no billing API yet)*
 - [ ] Heroku
-- [ ] Amazon Web Services
+- [x] Amazon Web Services
 - [ ] Google Cloud Platform
 - [ ] [suggest a new
   one!](https://github.com/mrusme/cloudcash/issues/new?title=[suggestion]%20New%20cloud%20service%20NAME%20HERE)
@@ -24,7 +24,10 @@ Monitor your cloud spendings from the CLI (and from
 go build .
 ```
 
+
 ## Configuration
+
+Only add the services that you want to use and delete all the others:
 
 ```sh
 cat ~/.config/cloudcash.toml
@@ -32,6 +35,7 @@ cat ~/.config/cloudcash.toml
 
 ```
 WaybarPango = "  {{.Name}} <span color='#aaaaaa'>${{.Status.CurrentCharges}}</span>"
+WaybarPangoJoiner = " · "
 
 [Service]
 
@@ -41,16 +45,29 @@ APIKey = "XXXX"
 [Service.DigitalOcean]
 APIKey = "XXXX"
 
+[Service.AWS]
+AWSAccessKeyID = "AAAA"
+AWSSecretAccessKey = "XXXX"
+Region = "us-east-1"
 ```
 
 
 ## Use
 
-### CLI
+
+### CLI (text)
 
 ```sh
 cloudcash
 ```
+
+
+### CLI (JSON)
+
+```sh
+cloudcash -json
+```
+
 
 ### Waybar
 
