@@ -12,10 +12,12 @@ type Config struct {
       APIKey             string
     }
   }
+  WaybarPango           string
 }
 
 func Cfg() (Config, error) {
   viper.SetDefault("Service.Vultr.APIKey", "")
+  viper.SetDefault("WaybarPango", "")
 
   viper.SetConfigName("cloudcash.toml")
   viper.SetConfigType("toml")
