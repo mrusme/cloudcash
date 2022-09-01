@@ -1,12 +1,15 @@
 package main
 
 import (
-  "flag"
-  "encoding/json"
-  "fmt"
-  "bytes"
+	"flag"
+	"fmt"
 
-  "text/template"
+	"text/template"
+
+	"github.com/mrusme/cloudcash/cloud"
+	"github.com/mrusme/cloudcash/cloud/digitalocean"
+	"github.com/mrusme/cloudcash/cloud/vultr"
+	"github.com/mrusme/cloudcash/lib"
 )
 
 func main() {
@@ -15,31 +18,29 @@ func main() {
   flag.BoolVar(&waybarPango, "waybar-pango", false, "Output Waybar compatible JSON with Pango template per service")
   flag.Parse()
 
-  config, err := Cfg()
+  config, err := lib.Cfg()
   if err != nil {
     panic(err)
   }
 
   waybarPangoTmpl := template.Must(template.New("waybar").Parse(config.WaybarPango))
 
-  services := new(Services)
-  services.initAll(&config)
-  services.refreshAll()
+  c := cloud.New(&config)
+
+  if s, err := vultr.New(&config); err == nil {
+    c.AddService("vultr", "Vultr", s)
+  }
+  if s, err := digitalocean.New(&config); err == nil {
+    c.AddService("digitalocean", "DigitalOcean", s)
+  }
+  c.RefreshAll()
 
   if waybarPango == false {
-    fmt.Print(services.toJSON())
+    fmt.Print(c.JSON())
   } else {
-    fmt.Print(services.toWaybar(waybarPangoTmpl))
+    fmt.Print(c.Waybar(waybarPangoTmpl))
   }
 
   return
-}
-
-func JSONMarshal(t interface{}) ([]byte, error) {
-  buffer := &bytes.Buffer{}
-  encoder := json.NewEncoder(buffer)
-  encoder.SetEscapeHTML(false)
-  err := encoder.Encode(t)
-  return buffer.Bytes(), err
 }
 

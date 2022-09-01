@@ -31,12 +31,16 @@ cat ~/.config/cloudcash.toml
 ```
 
 ```
-WaybarPango = "  {{.Service}} <span color='#aaaaaa'>${{.CurrentCharges}}</span>"
+WaybarPango = "  {{.Name}} <span color='#aaaaaa'>${{.Status.CurrentCharges}}</span>"
 
 [Service]
 
 [Service.Vultr]
-APIKey = "XXXXXX"
+APIKey = "XXXX"
+
+[Service.DigitalOcean]
+APIKey = "XXXX"
+
 ```
 
 

@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
   "strings"
@@ -16,11 +16,13 @@ type Config struct {
     }
   }
   WaybarPango           string
+  WaybarPangoJoiner     string
 }
 
 func Cfg() (Config, error) {
   viper.SetDefault("Service.Vultr.APIKey", "")
   viper.SetDefault("WaybarPango", "")
+  viper.SetDefault("WaybarPangoJoiner", " · ")
 
   viper.SetConfigName("cloudcash.toml")
   viper.SetConfigType("toml")
