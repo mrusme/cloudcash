@@ -11,9 +11,12 @@ Check your cloud spending from the CLI (and from
 - [x] Vultr
 - [x] DigitalOcean
 - [ ] Render *(no billing API yet)*
-- [ ] Heroku
+- [ ] Heroku *(have no account ¯\\_(ツ)_/¯  )*
 - [x] Amazon Web Services
-- [ ] Google Cloud Platform
+- [ ] Google Cloud Platform *(have no account ¯\\_(ツ)_/¯  )*
+- [ ] Microsoft Azure *(have no account ¯\\_(ツ)_/¯  )*
+- [ ] Alibaba Cloud *(have no account ¯\\_(ツ)_/¯  )*
+- [ ] Oracle Cloud *(have no account ¯\\_(ツ)_/¯  )*
 - [ ] [suggest a new
   one!](https://github.com/mrusme/cloudcash/issues/new?title=[suggestion]%20New%20cloud%20service%20NAME%20HERE)
 
@@ -34,8 +37,9 @@ cat ~/.config/cloudcash.toml
 ```
 
 ```
-WaybarPango = "  {{.Name}} <span color='#aaaaaa'>${{.Status.CurrentCharges}}</span>"
-WaybarPangoJoiner = " · "
+[Waybar]
+Pango = "  {{.Name}} <span color='#aaaaaa'>${{.Status.CurrentCharges}}</span> [<span color='#aaaaaa'>${{.Status.PreviousCharges}}</span>]"
+PangoJoiner = " · "
 
 [Service]
 
@@ -49,6 +53,17 @@ APIKey = "XXXX"
 AWSAccessKeyID = "AAAA"
 AWSSecretAccessKey = "XXXX"
 Region = "us-east-1"
+```
+
+### Waybar
+
+The `Pango` template used in the `-waybar-pango` output is used **per service**,
+separated by the `PangoJouner` string. To make it clear, if `Pango` is
+`<span>{{.Name}}</span>` and `PangoJoiner` is ` - ` then the output for two
+services (e.g. Vultr and AWS) would be:
+
+```html
+<span>Vultr</span> - <span>AWS</span>
 ```
 
 
