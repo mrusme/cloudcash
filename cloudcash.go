@@ -2,7 +2,6 @@ package main
 
 import (
   "context"
-  "os"
   "encoding/json"
   "fmt"
 
@@ -10,29 +9,50 @@ import (
   "golang.org/x/oauth2"
 )
 
-type Output struct {
-  Vultr struct  {
-    CurrentCost float32 `json:"current_cost"`
+type Services struct {
+  Vultr struct {
+    ctx       context.Context
+    oauth2cfg oauth2.Config
+    c         *govultr.Client
+    Status    ServiceStatus `json:"status,omitempty"`
   } `json:"vultr,omitempty"`
 }
 
-func main() {
-  ctx := context.Background()
-  oauth2cfg := oauth2.Config{}
-  ts := oauth2cfg.TokenSource(ctx, &oauth2.Token{AccessToken: os.Getenv("VULTR_API_KEY")})
-  vultr := govultr.NewClient(oauth2.NewClient(ctx, ts))
-  vultr.SetUserAgent("github.com/mrusme/cloudcash")
+type ServiceStatus struct {
+  CurrentCost float32 `json:"current_cost"`
+}
 
-  account, err := vultr.Account.Get(ctx)
+func main() {
+  config, err := Cfg()
   if err != nil {
-    return
+    panic(err)
   }
 
-  output := Output{}
-  output.Vultr.CurrentCost = account.PendingCharges
+  services := new(Services)
+  services.initVultr(&config)
+  services.refreshVultr()
 
-  outputJson, _ := json.Marshal(output)
+  outputJson, _ := json.Marshal(services)
   fmt.Println(string(outputJson))
 
   return
+}
+
+func (s *Services) initVultr(config *Config) (error) {
+  s.Vultr.ctx = context.Background()
+  s.Vultr.oauth2cfg = oauth2.Config{}
+  ts := s.Vultr.oauth2cfg.TokenSource(s.Vultr.ctx, &oauth2.Token{AccessToken: config.Service.Vultr.APIKey})
+  s.Vultr.c = govultr.NewClient(oauth2.NewClient(s.Vultr.ctx, ts))
+  s.Vultr.c.SetUserAgent("github.com/mrusme/cloudcash")
+  return nil
+}
+
+func (s *Services) refreshVultr() (error) {
+  account, err := s.Vultr.c.Account.Get(s.Vultr.ctx)
+  if err != nil {
+    return err
+  }
+
+  s.Vultr.Status.CurrentCost = account.PendingCharges
+  return nil
 }
