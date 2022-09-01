@@ -11,6 +11,9 @@ type Config struct {
     Vultr                struct {
       APIKey             string
     }
+    DigitalOcean         struct {
+      APIKey             string
+    }
   }
   WaybarPango           string
 }

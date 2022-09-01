@@ -9,7 +9,9 @@ Monitor your cloud spendings from the CLI (and from
 **Supported Cloud Services:**
 
 - [x] Vultr
-- [ ] DigitalOcean
+- [x] DigitalOcean
+- [ ] Render
+- [ ] Heroku
 - [ ] Amazon Web Services
 - [ ] Google Cloud Platform
 - [ ] [suggest a new
@@ -29,7 +31,7 @@ cat ~/.config/cloudcash.toml
 ```
 
 ```
-WaybarPango = "  {{.Service}} <span color='#aaaaaa'>${{.CurrentCost}}</span>"
+WaybarPango = "  {{.Service}} <span color='#aaaaaa'>${{.CurrentCharges}}</span>"
 
 [Service]
 
