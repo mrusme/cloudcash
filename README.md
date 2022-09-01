@@ -17,6 +17,7 @@ Check your cloud spending from the CLI (and from
 - [ ] Microsoft Azure *(have no account ¯\\_(ツ)_/¯  )*
 - [ ] Alibaba Cloud *(have no account ¯\\_(ツ)_/¯  )*
 - [ ] Oracle Cloud *(have no account ¯\\_(ツ)_/¯  )*
+- [ ] Hetzner Cloud *(no billing API yet)*
 - [ ] [suggest a new
   one!](https://github.com/mrusme/cloudcash/issues/new?title=[suggestion]%20New%20cloud%20service%20NAME%20HERE)
 
@@ -65,6 +66,9 @@ services (e.g. Vultr and AWS) would be:
 ```html
 <span>Vultr</span> - <span>AWS</span>
 ```
+
+The `Pango` configuration uses Go's
+[`text/template`](https://pkg.go.dev/text/template).
 
 
 ## Use

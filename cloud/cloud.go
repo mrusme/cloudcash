@@ -6,6 +6,7 @@ import (
 
   "text/template"
   "fmt"
+  "time"
 
   "github.com/mrusme/cloudcash/lib"
 )
@@ -65,7 +66,13 @@ func (c *Cloud) Waybar(t *template.Template) (string) {
     }
   }
 
+  waybarOutput.Class = "cloudcash"
   waybarOutput.Text = strings.Join(statuses, c.Config.Waybar.PangoJoiner)
+  waybarOutput.Tooltip = fmt.Sprintf(
+    "Updated %s",
+    time.Now().Format(time.RFC822),
+  )
+
   outputJson, _ := lib.JSONMarshal(waybarOutput)
   return string(outputJson)
 }
