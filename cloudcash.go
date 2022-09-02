@@ -10,6 +10,7 @@ import (
   "github.com/mrusme/cloudcash/cloud"
   "github.com/mrusme/cloudcash/cloud/aws"
   "github.com/mrusme/cloudcash/cloud/digitalocean"
+  "github.com/mrusme/cloudcash/cloud/github"
   "github.com/mrusme/cloudcash/cloud/vultr"
   "github.com/mrusme/cloudcash/lib"
   "github.com/mrusme/cloudcash/menu"
@@ -59,6 +60,9 @@ func main() {
   }
   if s, err := aws.New(&config); err == nil {
     c.AddService("aws", "AWS", s)
+  }
+  if s, err := github.New(&config); err == nil {
+    c.AddService("github", "GitHub", s)
   }
 
   c.RefreshAll()

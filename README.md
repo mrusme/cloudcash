@@ -15,16 +15,24 @@ Check your cloud spending from the CLI, from
 
 #### Supported cloud services
 
-- [x] Vultr
-- [x] DigitalOcean
-- [ ] Render *(no billing API yet)*
-- [ ] Heroku *(have no account ¯\\_(ツ)_/¯  )*
+- [ ] [Alibaba
+  Cloud](https://www.alibabacloud.com/help/en/bss-openapi/latest/querybill) *(have no account ¯\\_(ツ)_/¯  )*
 - [x] Amazon Web Services
-- [ ] Google Cloud Platform *(have no account ¯\\_(ツ)_/¯  )*
-- [ ] Microsoft Azure *(have no account ¯\\_(ツ)_/¯  )*
-- [ ] Alibaba Cloud *(have no account ¯\\_(ツ)_/¯  )*
-- [ ] Oracle Cloud *(have no account ¯\\_(ツ)_/¯  )*
+- [x] DigitalOcean
+- [x] GitHub
+- [ ] [Google Cloud Platform](https://cloud.google.com/go/billing/apiv1) *(have
+  no account ¯\\_(ツ)_/¯  )*
+- [ ]
+  [Heroku](https://devcenter.heroku.com/articles/platform-api-reference#team-monthly-usage)
+  *(have no account ¯\\_(ツ)_/¯  )*
 - [ ] Hetzner Cloud *(no billing API yet)*
+- [ ] [Microsoft
+  Azure](https://docs.microsoft.com/en-us/azure/cost-management-billing/manage/consumption-api-overview)
+  *(have no account ¯\\_(ツ)_/¯  )*
+- [ ] [Oracle
+  Cloud](https://docs.oracle.com/en-us/iaas/Content/Billing/Concepts/costanalysisoverview.htm) *(have no account ¯\\_(ツ)_/¯  )*
+- [ ] Render *(no billing API yet)*
+- [x] Vultr
 - [ ] [suggest a new
   one!](https://github.com/mrusme/cloudcash/issues/new?title=[suggestion]%20New%20cloud%20service%20NAME%20HERE)
 
@@ -66,6 +74,15 @@ APIKey = "XXXX"
 AWSAccessKeyID = "AAAA"
 AWSSecretAccessKey = "XXXX"
 Region = "us-east-1"
+
+[Service.GitHub]
+APIKey = "XXXX"
+Users = [
+  "mrusme"
+]
+Orgs = [ 
+  "paper-street-soap-co"
+]
 ```
 
 Alternative paths for configuration file:
@@ -75,6 +92,13 @@ Alternative paths for configuration file:
 - `$HOME/.config/cloudcash.toml`
 - `$HOME/cloudcash.toml`
 - `./cloudcash.toml`
+
+***Note regarding GitHub:*** You can specify multiple users/orgs, which are
+queried and added up to one total amount. Calculation is done locally, based on
+the paid minutes reported by the GitHub API and the [officially available
+numbers](https://docs.github.com/en/billing/managing-billing-for-github-actions/about-billing-for-github-actions),
+and could be off to a certain degree, due to additional costs that might have
+incurred on GitHub.
 
 
 ### Waybar

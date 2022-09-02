@@ -19,6 +19,11 @@ type Config struct {
       AWSSecretAccessKey string
       Region             string
     }
+    GitHub               struct {
+      APIKey             string
+      Orgs               []string
+      Users              []string
+    }
   }
   Waybar                 struct {
     Pango                string
@@ -33,6 +38,13 @@ type Config struct {
 
 func Cfg() (Config, error) {
   viper.SetDefault("Service.Vultr.APIKey", "")
+  viper.SetDefault("Service.DigitalOcean.APIKey", "")
+  viper.SetDefault("Service.AWS.AWSAccessKeyID", "")
+  viper.SetDefault("Service.AWS.AWSSecretAccessKey", "")
+  viper.SetDefault("Service.AWS.Region", "")
+  viper.SetDefault("Service.GitHub.APIKey", "")
+  viper.SetDefault("Service.GitHub.Orgs", []string{})
+  viper.SetDefault("Service.GitHub.Users", []string{})
   viper.SetDefault("Waybar.Pango", "")
   viper.SetDefault("Waybar.PangoJoiner", " · ")
   viper.SetDefault("Menu.Template", "{{.Name}} ${{.Status.CurrentCharges}}")
