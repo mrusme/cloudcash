@@ -68,6 +68,14 @@ AWSSecretAccessKey = "XXXX"
 Region = "us-east-1"
 ```
 
+Alternative paths for configuration file:
+
+- `/etc/cloudcash.toml`
+- `$XDG_CONFIG_HOME/cloudcash.toml`
+- `$HOME/.config/cloudcash.toml`
+- `$HOME/cloudcash.toml`
+- `./cloudcash.toml`
+
 
 ### Waybar
 
@@ -126,3 +134,11 @@ rg -NA6 'cloudcash":'  ~/.config/waybar/config
   },
 ```
 
+
+### macOS menu bar 
+
+```sh
+cloudcash -menu-mode 
+```
+
+Alternatively set `Menu.IsDefault` to `true` in configuration.
