@@ -94,3 +94,19 @@ func (c *Cloud) Text() (string) {
   return text
 }
 
+func (c *Cloud) MenuText() (string) {
+  var text string = ""
+
+  for _, service := range c.Services {
+    text = fmt.Sprintf(
+      "%s%s %s [$%s/$%s] · ",
+      text,
+      service.Name,
+      service.Status.CurrentCharges,
+      service.Status.PreviousCharges,
+      service.Status.AccountBalance,
+    )
+  }
+
+  return text
+}

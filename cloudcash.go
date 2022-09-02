@@ -11,11 +11,13 @@ import (
 	"github.com/mrusme/cloudcash/cloud/digitalocean"
 	"github.com/mrusme/cloudcash/cloud/vultr"
 	"github.com/mrusme/cloudcash/lib"
+	"github.com/mrusme/cloudcash/menu"
 )
 
 func main() {
   var waybarPango bool = false
   var jsonOut     bool = false
+  var menuMode    bool = false
 
   flag.BoolVar(
     &jsonOut,
@@ -28,6 +30,12 @@ func main() {
     "waybar-pango",
     false,
     "Output Waybar compatible JSON with Pango template per service",
+  )
+  flag.BoolVar(
+    &menuMode,
+    "menu-mode",
+    false,
+    "Run as menubar app (only on macOS)",
   )
   flag.Parse()
 
@@ -47,6 +55,12 @@ func main() {
   if s, err := aws.New(&config); err == nil {
     c.AddService("aws", "AWS", s)
   }
+
+  if menuMode == true {
+    menu.Run(c)
+    return
+  }
+
   c.RefreshAll()
 
   if jsonOut == true {

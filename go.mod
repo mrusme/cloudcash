@@ -9,6 +9,8 @@ require (
 
 require (
 	github.com/aws/aws-sdk-go v1.44.90 // indirect
+	github.com/caseymrm/askm v1.0.0 // indirect
+	github.com/caseymrm/menuet v1.0.1 // indirect
 	github.com/digitalocean/godo v1.83.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
