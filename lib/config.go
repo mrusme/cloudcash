@@ -27,6 +27,7 @@ type Config struct {
   Menu                   struct {
     Template             string
     Joiner               string
+    IsDefault            bool
   }
 }
 
@@ -36,6 +37,7 @@ func Cfg() (Config, error) {
   viper.SetDefault("Waybar.PangoJoiner", " · ")
   viper.SetDefault("Menu.Template", "{{.Name}} ${{.Status.CurrentCharges}}")
   viper.SetDefault("Menu.Joiner", " · ")
+  viper.SetDefault("Menu.IsDefault", false)
 
   viper.SetConfigName("cloudcash.toml")
   viper.SetConfigType("toml")

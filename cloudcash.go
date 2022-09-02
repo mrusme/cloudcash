@@ -56,7 +56,8 @@ func main() {
     c.AddService("aws", "AWS", s)
   }
 
-  if menuMode == true {
+  if menuMode == true ||
+     config.Menu.IsDefault == true {
     t := template.Must(template.New("menu").Parse(config.Menu.Template))
     menu.Run(c, t)
     return

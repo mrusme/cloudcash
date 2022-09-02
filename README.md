@@ -4,11 +4,16 @@ Cloudcash
 Check your cloud spending from the CLI, from
 [Waybar](https://github.com/Alexays/Waybar), and from the macOS menu bar!
 
+
+#### Waybar
 ![Cloudcash on Waybar](screenshot-waybar.png)
 
+
+#### macOS menu bar
 ![Cloudcash on macOS](screenshot-macos.png)
 
-**Supported cloud services:**
+
+#### Supported cloud services
 
 - [x] Vultr
 - [x] DigitalOcean
@@ -47,6 +52,7 @@ PangoJoiner = " · "
 [Menu]
 Template = "{{.Name}} ${{.Status.CurrentCharges}}"
 Joiner = " · "
+IsDefault = false
 
 [Service]
 
@@ -83,6 +89,8 @@ The `Pango` configuration uses Go's
 The `Template` in `Menu` is what is used to render the macOS menu bar widget. As
 with the [Waybar](#waybar) output, the template is **per service**, separated by
 the `Joiner` string.
+
+To always run in menu mode, set `Menu.IsDefault` to `true`.
 
 
 ## Use
