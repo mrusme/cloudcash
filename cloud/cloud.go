@@ -94,19 +94,18 @@ func (c *Cloud) Text() (string) {
   return text
 }
 
-func (c *Cloud) MenuText() (string) {
+func (c *Cloud) MenuText(t *template.Template) (string) {
   var text string = ""
+  var statuses []string
 
   for _, service := range c.Services {
-    text = fmt.Sprintf(
-      "%s%s %s [$%s/$%s] · ",
-      text,
-      service.Name,
-      service.Status.CurrentCharges,
-      service.Status.PreviousCharges,
-      service.Status.AccountBalance,
-    )
+    var status bytes.Buffer
+    if err := t.Execute(&status, service); err == nil {
+      statuses = append(statuses, status.String())
+    }
   }
+
+  text = strings.Join(statuses, c.Config.Waybar.PangoJoiner)
 
   return text
 }

@@ -57,7 +57,8 @@ func main() {
   }
 
   if menuMode == true {
-    menu.Run(c)
+    t := template.Must(template.New("menu").Parse(config.Menu.Template))
+    menu.Run(c, t)
     return
   }
 

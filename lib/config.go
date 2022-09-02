@@ -24,12 +24,18 @@ type Config struct {
     Pango                string
     PangoJoiner          string
   }
+  Menu                   struct {
+    Template             string
+    Joiner               string
+  }
 }
 
 func Cfg() (Config, error) {
   viper.SetDefault("Service.Vultr.APIKey", "")
   viper.SetDefault("Waybar.Pango", "")
   viper.SetDefault("Waybar.PangoJoiner", " · ")
+  viper.SetDefault("Menu.Template", "{{.Name}} ${{.Status.CurrentCharges}}")
+  viper.SetDefault("Menu.Joiner", " · ")
 
   viper.SetConfigName("cloudcash.toml")
   viper.SetConfigType("toml")
