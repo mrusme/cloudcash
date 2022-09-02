@@ -1,6 +1,7 @@
 package main
 
 import (
+  "runtime"
   "flag"
   "fmt"
 
@@ -39,6 +40,10 @@ func main() {
   )
   flag.Parse()
 
+  if menuMode == true {
+    runtime.LockOSThread()
+  }
+
   config, err := lib.Cfg()
   if err != nil {
     panic(err)
@@ -56,23 +61,23 @@ func main() {
     c.AddService("aws", "AWS", s)
   }
 
+  c.RefreshAll()
+
   if menuMode == true ||
      config.Menu.IsDefault == true {
     t := template.Must(template.New("menu").Parse(config.Menu.Template))
     menu.Run(c, t)
     return
-  }
-
-  c.RefreshAll()
-
-  if jsonOut == true {
-    fmt.Print(c.JSON())
-  } else if waybarPango == true {
-    fmt.Print(c.Waybar(
-      template.Must(template.New("waybar").Parse(config.Waybar.Pango)),
-    ))
   } else {
-    fmt.Print(c.Text())
+    if jsonOut == true {
+      fmt.Print(c.JSON())
+    } else if waybarPango == true {
+      fmt.Print(c.Waybar(
+        template.Must(template.New("waybar").Parse(config.Waybar.Pango)),
+      ))
+    } else {
+      fmt.Print(c.Text())
+    }
   }
 
   return
