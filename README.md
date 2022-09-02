@@ -1,10 +1,12 @@
 Cloudcash
 ---------
 
-Check your cloud spending from the CLI (and from
-[Waybar](https://github.com/Alexays/Waybar))!
+Check your cloud spending from the CLI, from
+[Waybar](https://github.com/Alexays/Waybar), and from the macOS menu bar!
 
-![Cloudcash on Waybar](screenshot.png)
+![Cloudcash on Waybar](screenshot-waybar.png)
+
+![Cloudcash on macOS](screenshot-macos.png)
 
 **Supported cloud services:**
 
@@ -42,6 +44,10 @@ cat ~/.config/cloudcash.toml
 Pango = "  {{.Name}} <span color='#aaaaaa'>${{.Status.CurrentCharges}}</span> [<span color='#aaaaaa'>${{.Status.PreviousCharges}}</span>]"
 PangoJoiner = " · "
 
+[Menu]
+Template = "{{.Name}} ${{.Status.CurrentCharges}}"
+Joiner = " · "
+
 [Service]
 
 [Service.Vultr]
@@ -56,6 +62,7 @@ AWSSecretAccessKey = "XXXX"
 Region = "us-east-1"
 ```
 
+
 ### Waybar
 
 The `Pango` template used in the `-waybar-pango` output is used **per service**,
@@ -69,6 +76,13 @@ services (e.g. Vultr and AWS) would be:
 
 The `Pango` configuration uses Go's
 [`text/template`](https://pkg.go.dev/text/template).
+
+
+### macOS menu bar 
+
+The `Template` in `Menu` is what is used to render the macOS menu bar widget. As
+with the [Waybar](#waybar) output, the template is **per service**, separated by
+the `Joiner` string.
 
 
 ## Use
