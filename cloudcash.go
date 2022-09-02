@@ -1,17 +1,17 @@
 package main
 
 import (
-	"flag"
-	"fmt"
+  "flag"
+  "fmt"
 
-	"text/template"
+  "text/template"
 
-	"github.com/mrusme/cloudcash/cloud"
-	"github.com/mrusme/cloudcash/cloud/aws"
-	"github.com/mrusme/cloudcash/cloud/digitalocean"
-	"github.com/mrusme/cloudcash/cloud/vultr"
-	"github.com/mrusme/cloudcash/lib"
-	"github.com/mrusme/cloudcash/menu"
+  "github.com/mrusme/cloudcash/cloud"
+  "github.com/mrusme/cloudcash/cloud/aws"
+  "github.com/mrusme/cloudcash/cloud/digitalocean"
+  "github.com/mrusme/cloudcash/cloud/vultr"
+  "github.com/mrusme/cloudcash/lib"
+  "github.com/mrusme/cloudcash/menu"
 )
 
 func main() {

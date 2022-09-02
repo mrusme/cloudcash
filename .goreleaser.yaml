@@ -8,7 +8,7 @@ changelog:
 builds:
   -
     goos:
-      - darwin
+      # - darwin
       - dragonfly
       - freebsd
       - linux

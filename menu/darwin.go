@@ -3,11 +3,11 @@
 package menu
 
 import (
-	"time"
-	"text/template"
+  "time"
+  "text/template"
 
-	"github.com/caseymrm/menuet"
-	"github.com/mrusme/cloudcash/cloud"
+  "github.com/caseymrm/menuet"
+  "github.com/mrusme/cloudcash/cloud"
 )
 
 func update(c *cloud.Cloud, t *template.Template) {

@@ -6,7 +6,6 @@ on:
       - '*'
 
 jobs:
-
   release:
     runs-on: ubuntu-latest
     steps:
@@ -32,3 +31,34 @@ jobs:
         args: release --rm-dist --timeout 80m
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release-macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Install dependencies
+      run: |
+        ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+        brew --version
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.18
+
+    - name: Run Go build
+      run: |
+        GOOS=darwin GOARCH=amd64 go build .
+        tar -czf "cloudcash_${{  github.ref_name }}_darwin_amd64.tar.gz" cloudcash
+        rm cloudcash
+        GOOS=darwin GOARCH=arm64 go build .
+        tar -czf "cloudcash_${{  github.ref_name }}_darwin_arm64.tar.gz" cloudcash
+        rm cloudcash
+
+    - uses: actions/upload-artifact@v3
+      with:
+        path: ${{ github.workspace }}/*.tar.gz
+        if-no-files-found: error
+

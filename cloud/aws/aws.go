@@ -1,16 +1,16 @@
 package aws
 
 import (
-	"errors"
+  "errors"
   "time"
 
   "github.com/aws/aws-sdk-go/aws"
   "github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/costexplorer"
-	"github.com/shopspring/decimal"
+  "github.com/aws/aws-sdk-go/aws/session"
+  "github.com/aws/aws-sdk-go/service/costexplorer"
+  "github.com/shopspring/decimal"
 
-	"github.com/mrusme/cloudcash/lib"
+  "github.com/mrusme/cloudcash/lib"
 )
 
 type AWS struct {
@@ -26,15 +26,15 @@ func New(config *lib.Config) (*AWS, error) {
 
   s := new(AWS)
 
-	sess, err := session.NewSession(&aws.Config{
-		Region: aws.String(config.Service.AWS.Region),
+  sess, err := session.NewSession(&aws.Config{
+    Region: aws.String(config.Service.AWS.Region),
     Credentials: credentials.NewStaticCredentials(config.Service.AWS.AWSAccessKeyID, config.Service.AWS.AWSSecretAccessKey, ""),
   })
   if err != nil {
     return nil, err
   }
 
-	s.c = costexplorer.New(sess)
+  s.c = costexplorer.New(sess)
 
   return s, nil
 }
@@ -44,24 +44,24 @@ func (s *AWS) GetServiceStatus() (*lib.ServiceStatus, error) {
   end := time.Now().AddDate(0, 0, 1).Format("2006-01-02")
   granularity := "MONTHLY"
   metrics := []string{
-		"UnblendedCost",
-		"UsageQuantity",
+    "UnblendedCost",
+    "UsageQuantity",
   }
 
-	result, err := s.c.GetCostAndUsage(&costexplorer.GetCostAndUsageInput{
-		TimePeriod: &costexplorer.DateInterval{
-			Start: aws.String(start),
-			End:   aws.String(end),
-		},
-		Granularity: aws.String(granularity),
-		GroupBy: []*costexplorer.GroupDefinition{
-			&costexplorer.GroupDefinition{
-				Type: aws.String("DIMENSION"),
-				Key:  aws.String("SERVICE"),
-			},
-		},
-		Metrics: aws.StringSlice(metrics),
-	})
+  result, err := s.c.GetCostAndUsage(&costexplorer.GetCostAndUsageInput{
+    TimePeriod: &costexplorer.DateInterval{
+      Start: aws.String(start),
+      End:   aws.String(end),
+    },
+    Granularity: aws.String(granularity),
+    GroupBy: []*costexplorer.GroupDefinition{
+      &costexplorer.GroupDefinition{
+        Type: aws.String("DIMENSION"),
+        Key:  aws.String("SERVICE"),
+      },
+    },
+    Metrics: aws.StringSlice(metrics),
+  })
   if err != nil {
     return nil, err
   }
