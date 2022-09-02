@@ -1,4 +1,10 @@
 # .goreleaser.yaml
+changelog:
+  skip: false
+  use: github-native
+  sort: asc
+  abbrev: 0
+
 builds:
   -
     goos:
