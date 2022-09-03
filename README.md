@@ -120,7 +120,8 @@ The `Pango` configuration uses Go's
 
 The `Template` in `Menu` is what is used to render the macOS menu bar widget. As
 with the [Waybar](#waybar) output, the template is **per service**, separated by
-the `Joiner` string.
+the `Joiner` string. Unlike the `Waybar.Pango` configuration, `Menu.Template`
+does not support Pango, but it can include things like Emojis.
 
 To always run in menu mode, set `Menu.IsDefault` to `true`.
 
