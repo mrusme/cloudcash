@@ -69,7 +69,11 @@ func (s *AWS) GetServiceStatus() (*lib.ServiceStatus, error) {
   status := new(lib.ServiceStatus)
 
   status.AccountBalance, _ = decimal.NewFromString("0.0")
-  status.CurrentCharges, _ = decimal.NewFromString(*result.ResultsByTime[0].Total["UnblendedCost"].Amount)
+  if len(result.ResultsByTime) > 0 {
+    if unblendedCost, ok := result.ResultsByTime[0].Total["UnblendedCost"]; ok {
+      status.CurrentCharges, _ = decimal.NewFromString(*unblendedCost.Amount)
+    }
+  }
   status.PreviousCharges, _ = decimal.NewFromString("0.0")
 
   return status, nil
