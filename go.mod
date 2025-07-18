@@ -1,6 +1,6 @@
 module github.com/mrusme/cloudcash
 
-go 1.18
+go 1.23.0
 
 require (
 	github.com/aws/aws-sdk-go v1.51.11
@@ -10,12 +10,11 @@ require (
 	github.com/shopspring/decimal v1.3.1
 	github.com/spf13/viper v1.18.2
 	github.com/vultr/govultr/v2 v2.17.2
-	golang.org/x/oauth2 v0.18.0
+	golang.org/x/oauth2 v0.27.0
 )
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
@@ -37,8 +36,6 @@ require (
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	google.golang.org/appengine v1.6.8 // indirect
-	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
