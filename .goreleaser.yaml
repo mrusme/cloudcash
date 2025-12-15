@@ -1,9 +1,5 @@
 # .goreleaser.yaml
-changelog:
-  skip: false
-  use: github-native
-  sort: asc
-  abbrev: 0
+version: 2
 
 builds:
   -
@@ -33,7 +29,7 @@ builds:
         goarch: 386
       - goos: darwin
         goarch: arm
-      - goos: darwin # TODO: https://github.com/progrium/macdriver/issues/5
+      - goos: darwin
         goarch: arm64
       - goos: darwin
         goarch: ppc64
@@ -88,4 +84,14 @@ builds:
         goarm: ppc64le
       - goos: windows
         goarm: riscv64
+
+changelog:
+  disable: false
+  use: github
+  format: "{{.SHA}}: {{.Message}} (@{{.AuthorUsername}})"
+  sort: asc
+  abbrev: -1
+release:
+  footer: ""
+
 

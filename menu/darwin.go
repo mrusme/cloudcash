@@ -8,9 +8,9 @@ import (
   "text/template"
 
   "github.com/mrusme/cloudcash/cloud"
-  "github.com/progrium/macdriver/cocoa"
-  "github.com/progrium/macdriver/core"
-  "github.com/progrium/macdriver/objc"
+  "github.com/progrium/darwinkit/cocoa"
+  "github.com/progrium/darwinkit/core"
+  "github.com/progrium/darwinkit/objc"
 )
 
 func Run(c *cloud.Cloud, t *template.Template) {
