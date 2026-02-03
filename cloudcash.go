@@ -7,13 +7,13 @@ import (
 
   "text/template"
 
-  "github.com/mrusme/cloudcash/cloud"
-  "github.com/mrusme/cloudcash/cloud/aws"
-  "github.com/mrusme/cloudcash/cloud/digitalocean"
-  "github.com/mrusme/cloudcash/cloud/github"
-  "github.com/mrusme/cloudcash/cloud/vultr"
-  "github.com/mrusme/cloudcash/lib"
-  "github.com/mrusme/cloudcash/menu"
+  "xn--gckvb8fzb.com/cloudcash/cloud"
+  "xn--gckvb8fzb.com/cloudcash/cloud/aws"
+  "xn--gckvb8fzb.com/cloudcash/cloud/digitalocean"
+  "xn--gckvb8fzb.com/cloudcash/cloud/github"
+  "xn--gckvb8fzb.com/cloudcash/cloud/vultr"
+  "xn--gckvb8fzb.com/cloudcash/lib"
+  "xn--gckvb8fzb.com/cloudcash/menu"
 )
 
 func main() {

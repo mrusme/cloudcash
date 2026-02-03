@@ -10,7 +10,7 @@ import (
   "github.com/aws/aws-sdk-go/service/costexplorer"
   "github.com/shopspring/decimal"
 
-  "github.com/mrusme/cloudcash/lib"
+  "xn--gckvb8fzb.com/cloudcash/lib"
 )
 
 type AWS struct {

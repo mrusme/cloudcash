@@ -9,7 +9,7 @@ import (
 
   "golang.org/x/oauth2"
 
-  "github.com/mrusme/cloudcash/lib"
+  "xn--gckvb8fzb.com/cloudcash/lib"
 )
 
 var PRICE_PER_MINUTE decimal.Decimal = decimal.NewFromFloat32(0.008)

@@ -7,7 +7,7 @@ import (
   "time"
   "text/template"
 
-  "github.com/mrusme/cloudcash/cloud"
+  "xn--gckvb8fzb.com/cloudcash/cloud"
   "github.com/progrium/darwinkit/cocoa"
   "github.com/progrium/darwinkit/core"
   "github.com/progrium/darwinkit/objc"

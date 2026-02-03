@@ -1,4 +1,4 @@
-module github.com/mrusme/cloudcash
+module xn--gckvb8fzb.com/cloudcash
 
 go 1.24.0
 

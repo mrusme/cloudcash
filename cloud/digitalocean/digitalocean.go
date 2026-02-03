@@ -7,7 +7,7 @@ import (
   "github.com/shopspring/decimal"
   "github.com/digitalocean/godo"
 
-  "github.com/mrusme/cloudcash/lib"
+  "xn--gckvb8fzb.com/cloudcash/lib"
 )
 
 type DigitalOcean struct {

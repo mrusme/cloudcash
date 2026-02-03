@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/mrusme/cloudcash/lib"
+	"xn--gckvb8fzb.com/cloudcash/lib"
 )
 
 type Vultr struct {
@@ -29,7 +29,7 @@ func New(config *lib.Config) (*Vultr, error) {
 	s.oauth2cfg = oauth2.Config{}
 	ts := s.oauth2cfg.TokenSource(s.ctx, &oauth2.Token{AccessToken: config.Service.Vultr.APIKey})
 	s.c = govultr.NewClient(oauth2.NewClient(s.ctx, ts))
-	s.c.SetUserAgent("github.com/mrusme/cloudcash")
+	s.c.SetUserAgent("xn--gckvb8fzb.com/cloudcash")
 
 	return s, nil
 }

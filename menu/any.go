@@ -5,7 +5,7 @@ package menu
 import (
   "fmt"
   "text/template"
-  "github.com/mrusme/cloudcash/cloud"
+  "xn--gckvb8fzb.com/cloudcash/cloud"
 )
 
 func Run(c *cloud.Cloud, t *template.Template) {

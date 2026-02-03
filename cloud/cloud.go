@@ -8,7 +8,7 @@ import (
   "fmt"
   "time"
 
-  "github.com/mrusme/cloudcash/lib"
+  "xn--gckvb8fzb.com/cloudcash/lib"
 )
 
 type Cloud struct {
