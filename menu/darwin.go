@@ -1,48 +1,63 @@
+//go:build darwin
 // +build darwin
 
 package menu
 
 import (
-  "fmt"
-  "time"
-  "text/template"
+	"fmt"
+	"text/template"
+	"time"
 
-  "xn--gckvb8fzb.com/cloudcash/cloud"
-  "github.com/progrium/darwinkit/cocoa"
-  "github.com/progrium/darwinkit/core"
-  "github.com/progrium/darwinkit/objc"
+	"github.com/progrium/darwinkit/macos/appkit"
+	"github.com/progrium/darwinkit/macos/foundation"
+	"github.com/progrium/darwinkit/objc"
+
+	"xn--gckvb8fzb.com/cloudcash/cloud"
 )
 
 func Run(c *cloud.Cloud, t *template.Template) {
-  cocoa.TerminateAfterWindowsClose = false
-  app := cocoa.NSApp_WithDidLaunch(func(n objc.Object) {
-    obj := cocoa.NSStatusBar_System().StatusItemWithLength(cocoa.NSVariableStatusItemLength)
-    obj.Retain()
+	appkit.TerminateAfterWindowsClose = false
 
-    go func() {
-      for {
-        fmt.Println("Updating menu ...")
-        core.Dispatch(func() {
-          obj.Button().SetTitle(c.MenuText(t))
-        })
-        fmt.Println("Sleeping ...")
-        time.Sleep(time.Hour)
-        fmt.Println("Refreshing ...")
-        c.RefreshAll()
-      }
-    }()
+	app := appkit.Application_SharedApplication()
 
-    itemQuit := cocoa.NSMenuItem_New()
-    itemQuit.SetTitle("Quit")
-    itemQuit.SetAction(objc.Sel("terminate:"))
+	app.SetActivationPolicy(appkit.ApplicationActivationPolicyAccessory)
 
-    menu := cocoa.NSMenu_New()
-    menu.AddItem(itemQuit)
-    obj.SetMenu(menu)
-  })
-  fmt.Println("Running menu bar widget ..")
-  app.ActivateIgnoringOtherApps(true)
-  app.Run()
-  fmt.Println("Ended menu bar widget")
+	var statusItem appkit.StatusItem
+
+	app.SetDidFinishLaunching(func(notification foundation.Notification) {
+		statusBar := appkit.StatusBar_SystemStatusBar()
+		statusItem = statusBar.StatusItemWithLength(appkit.VariableStatusItemLength)
+		statusItem.Retain()
+
+		button := statusItem.Button()
+
+		go func() {
+			for {
+				fmt.Println("Updating menu ...")
+				foundation.Dispatch(func() {
+					button.SetTitle(c.MenuText(t))
+				})
+				fmt.Println("Sleeping ...")
+				time.Sleep(time.Hour)
+				fmt.Println("Refreshing ...")
+				c.RefreshAll()
+			}
+		}()
+
+		menu := appkit.NewMenu()
+
+		itemQuit := appkit.NewMenuItemWithAction(
+			"Quit",
+			objc.Sel("terminate:"),
+			"",
+		)
+
+		menu.AddItem(itemQuit)
+		statusItem.SetMenu(menu)
+	})
+
+	fmt.Println("Running menu bar widget ..")
+	app.ActivateIgnoringOtherApps(true)
+	app.Run()
+	fmt.Println("Ended menu bar widget")
 }
-
