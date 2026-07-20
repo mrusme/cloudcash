@@ -9,6 +9,7 @@ import (
 
   "xn--gckvb8fzb.com/cloudcash/cloud"
   "xn--gckvb8fzb.com/cloudcash/cloud/aws"
+  "xn--gckvb8fzb.com/cloudcash/cloud/claude"
   "xn--gckvb8fzb.com/cloudcash/cloud/digitalocean"
   "xn--gckvb8fzb.com/cloudcash/cloud/github"
   "xn--gckvb8fzb.com/cloudcash/cloud/vultr"
@@ -64,6 +65,9 @@ func main() {
   if s, err := github.New(&config); err == nil {
     c.AddService("github", "GitHub", s)
   }
+  if s, err := claude.New(&config); err == nil {
+    c.AddService("claude", "Claude", s)
+  }
 
   c.RefreshAll()
 
@@ -78,6 +82,7 @@ func main() {
     } else if waybarPango == true {
       fmt.Print(c.Waybar(
         template.Must(template.New("waybar").Parse(config.Waybar.Pango)),
+        template.Must(template.New("waybarUsage").Parse(config.Waybar.PangoUsage)),
       ))
     } else {
       fmt.Print(c.Text())

@@ -24,9 +24,15 @@ type Config struct {
       Orgs               []string
       Users              []string
     }
+    Claude               struct {
+      Enabled            bool
+      OAuthToken         string
+      CredentialsFile    string
+    }
   }
   Waybar                 struct {
     Pango                string
+    PangoUsage           string
     PangoJoiner          string
   }
   Menu                   struct {
@@ -45,7 +51,15 @@ func Cfg() (Config, error) {
   viper.SetDefault("Service.GitHub.APIKey", "")
   viper.SetDefault("Service.GitHub.Orgs", []string{})
   viper.SetDefault("Service.GitHub.Users", []string{})
+  viper.SetDefault("Service.Claude.Enabled", false)
+  viper.SetDefault("Service.Claude.OAuthToken", "")
+  viper.SetDefault("Service.Claude.CredentialsFile", "")
   viper.SetDefault("Waybar.Pango", "")
+  viper.SetDefault(
+    "Waybar.PangoUsage",
+    " [<span color='#aaaaaa'>{{.Status.SessionUsage}}%</span> ·"+
+    " <span color='#aaaaaa'>{{.Status.WeeklyUsage}}%</span>]",
+  )
   viper.SetDefault("Waybar.PangoJoiner", " · ")
   viper.SetDefault("Menu.Template", "{{.Name}} ${{.Status.CurrentCharges}}")
   viper.SetDefault("Menu.Joiner", " · ")

@@ -54,16 +54,26 @@ func (c *Cloud) JSON() (string) {
   return string(outputJson)
 }
 
-func (c *Cloud) Waybar(t *template.Template) (string) {
+func (c *Cloud) Waybar(t *template.Template, u *template.Template) (string) {
   waybarOutput := new(WaybarOutput)
 
   var statuses []string
 
   for _, service := range c.Services {
     var status bytes.Buffer
-    if err := t.Execute(&status, service); err == nil {
-      statuses = append(statuses, status.String())
+    if err := t.Execute(&status, service); err != nil {
+      continue
     }
+
+    // Only services that meter usage against a quota render the usage
+    // template, so the others don't all end up showing 0%.
+    if u != nil && service.Status != nil &&
+       (service.Status.SessionUsage.IsPositive() ||
+        service.Status.WeeklyUsage.IsPositive()) {
+      u.Execute(&status, service)
+    }
+
+    statuses = append(statuses, status.String())
   }
 
   waybarOutput.Class = "cloudcash"
@@ -82,13 +92,25 @@ func (c *Cloud) Text() (string) {
 
   for _, service := range c.Services {
     text = fmt.Sprintf(
-      "%s%-20s$%8s  [previous: $%8s / balance: $%8s]\n",
+      "%s%-20s$%8s  [previous: $%8s / balance: $%8s]",
       text,
       service.Name,
       service.Status.CurrentCharges,
       service.Status.PreviousCharges,
       service.Status.AccountBalance,
     )
+
+    if service.Status.SessionUsage.IsPositive() ||
+       service.Status.WeeklyUsage.IsPositive() {
+      text = fmt.Sprintf(
+        "%s  [session: %3s%% / weekly: %3s%%]",
+        text,
+        service.Status.SessionUsage.RoundBank(0),
+        service.Status.WeeklyUsage.RoundBank(0),
+      )
+    }
+
+    text = fmt.Sprintf("%s\n", text)
   }
 
   return text
