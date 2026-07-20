@@ -10,6 +10,7 @@ import (
   "xn--gckvb8fzb.com/cloudcash/cloud"
   "xn--gckvb8fzb.com/cloudcash/cloud/aws"
   "xn--gckvb8fzb.com/cloudcash/cloud/claude"
+  "xn--gckvb8fzb.com/cloudcash/cloud/codex"
   "xn--gckvb8fzb.com/cloudcash/cloud/digitalocean"
   "xn--gckvb8fzb.com/cloudcash/cloud/github"
   "xn--gckvb8fzb.com/cloudcash/cloud/vultr"
@@ -67,6 +68,9 @@ func main() {
   }
   if s, err := claude.New(&config); err == nil {
     c.AddService("claude", "Claude", s)
+  }
+  if s, err := codex.New(&config); err == nil {
+    c.AddService("codex", "Codex", s)
   }
 
   c.RefreshAll()

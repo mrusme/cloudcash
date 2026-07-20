@@ -91,6 +91,11 @@ func (c *Cloud) Text() (string) {
   var text string = ""
 
   for _, service := range c.Services {
+    // Services whose refresh failed have no status to print.
+    if service.Status == nil {
+      continue
+    }
+
     text = fmt.Sprintf(
       "%s%-20s$%8s  [previous: $%8s / balance: $%8s]",
       text,

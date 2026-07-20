@@ -29,6 +29,12 @@ type Config struct {
       OAuthToken         string
       CredentialsFile    string
     }
+    Codex                struct {
+      Enabled            bool
+      OAuthToken         string
+      AccountID          string
+      CredentialsFile    string
+    }
   }
   Waybar                 struct {
     Pango                string
@@ -54,6 +60,10 @@ func Cfg() (Config, error) {
   viper.SetDefault("Service.Claude.Enabled", false)
   viper.SetDefault("Service.Claude.OAuthToken", "")
   viper.SetDefault("Service.Claude.CredentialsFile", "")
+  viper.SetDefault("Service.Codex.Enabled", false)
+  viper.SetDefault("Service.Codex.OAuthToken", "")
+  viper.SetDefault("Service.Codex.AccountID", "")
+  viper.SetDefault("Service.Codex.CredentialsFile", "")
   viper.SetDefault("Waybar.Pango", "")
   viper.SetDefault(
     "Waybar.PangoUsage",

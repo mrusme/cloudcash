@@ -19,6 +19,7 @@ Check your cloud spending from the CLI, from
       _(have no account ¯\\_(ツ)_/¯ )_
 - [x] Amazon Web Services
 - [x] Claude _(subscription usage, see note below)_
+- [x] Codex _(subscription usage, see note below)_
 - [x] DigitalOcean
 - [x] GitHub
 - [ ] [Google Cloud Platform](https://cloud.google.com/go/billing/apiv1) _(have
@@ -83,6 +84,9 @@ Orgs = [
 
 [Service.Claude]
 Enabled = true
+
+[Service.Codex]
+Enabled = true
 ```
 
 Alternative paths for configuration file:
@@ -123,6 +127,33 @@ uses the same undocumented endpoint that Claude Code's own `/usage` command
 queries, so it may break without notice. Anthropic's _documented_ usage and cost
 APIs cover API organizations only, require an Admin API key, and are not
 available to individual accounts.
+
+_**Note regarding Codex:**_ This reports your _ChatGPT subscription_ usage, not
+OpenAI API billing, and works the same way the Claude provider does. It fills
+`{{.Status.SessionUsage}}` from the 5-hour window and
+`{{.Status.WeeklyUsage}}` from the weekly one. OpenAI reports credits
+_remaining_ rather than credits spent, so the figure ends up in
+`{{.Status.AccountBalance}}` and `CurrentCharges` stays at zero. Accounts on an
+unlimited plan report no balance.
+
+The OAuth token and account ID are read from `$CODEX_HOME/auth.json`, falling
+back to `~/.codex/auth.json`, which the
+[Codex](https://developers.openai.com/codex) CLI maintains and refreshes:
+
+```
+[Service.Codex]
+Enabled = true
+# CredentialsFile = "/home/you/.codex/auth.json"
+# OAuthToken = "XXXX"
+# AccountID = "XXXX"
+```
+
+The same caveat as with Claude applies, only more so: OpenAI publishes no API
+for subscription usage, and this queries the endpoint the Codex CLI polls for
+its `/status` output. Newer Codex versions can keep credentials in the system
+keyring instead of `auth.json`, in which case there is no token to read and you
+have to set `OAuthToken` yourself. OpenAI's _documented_ costs and usage APIs
+cover platform spending only and need an admin key.
 
 ### Waybar
 
