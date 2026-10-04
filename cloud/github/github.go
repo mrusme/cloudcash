@@ -1,141 +1,80 @@
 package github
 
 import (
-  "context"
-  "errors"
+	"context"
+	"time"
 
-  "github.com/shopspring/decimal"
-  "github.com/google/go-github/v47/github"
+	"github.com/google/go-github/v85/github"
+	"github.com/shopspring/decimal"
 
-  "golang.org/x/oauth2"
-
-  "xn--gckvb8fzb.com/cloudcash/lib"
+	"xn--gckvb8fzb.com/cloudcash/lib"
 )
 
-var PRICE_PER_MINUTE decimal.Decimal = decimal.NewFromFloat32(0.008)
-var PRICE_PER_GB decimal.Decimal = decimal.NewFromFloat32(0.008)
-
 type GitHub struct {
-  cfg        *lib.Config
-  ctx        context.Context
-  oauth2cfg  oauth2.Config
-  c          *github.Client
+	cfg *lib.Config
+	c   *github.Client
 }
 
 func New(config *lib.Config) (*GitHub, error) {
-  if config.Service.GitHub.APIKey == "" {
-    return nil, errors.New("No API key")
-  }
+	apiKey, err := lib.Secret(
+		context.Background(),
+		config.Service.GitHub.APIKey,
+		config.Service.GitHub.APIKeyCommand,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if apiKey == "" {
+		return nil, lib.ErrNotConfigured
+	}
 
-  s := new(GitHub)
+	s := new(GitHub)
 
-  s.cfg = config
-  s.ctx = context.Background()
-  s.oauth2cfg = oauth2.Config{}
-  ts := s.oauth2cfg.TokenSource(s.ctx, &oauth2.Token{AccessToken: config.Service.GitHub.APIKey})
-  s.c = github.NewClient(oauth2.NewClient(s.ctx, ts))
+	s.cfg = config
+	s.c = github.NewClient(lib.NewHTTPClient()).WithAuthToken(apiKey)
 
-  return s, nil
+	return s, nil
 }
 
-func (s *GitHub) GetServiceStatus() (*lib.ServiceStatus, error) {
-  ctx := context.Background()
+func (s *GitHub) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, error) {
+	now := time.Now().UTC()
+	opts := &github.UsageReportOptions{
+		Year:  github.Ptr(now.Year()),
+		Month: github.Ptr(int(now.Month())),
+	}
 
-  var currentCharges decimal.Decimal = decimal.NewFromInt(0)
+	charges := decimal.Zero
 
-  for _, user := range s.cfg.Service.GitHub.Users {
-    actionBilling, _, err := s.c.Billing.GetActionsBillingUser(ctx, user)
-    if err != nil {
-      // TODO: Handle error
-      continue
-    }
-    currentCharges = AddTo(
-      currentCharges,
-      actionBilling.TotalPaidMinutesUsed,
-      PRICE_PER_MINUTE,
-    )
+	for _, user := range s.cfg.Service.GitHub.Users {
+		report, _, err := s.c.Billing.GetUsageReport(ctx, user, opts)
+		if err != nil {
+			return nil, err
+		}
+		charges = charges.Add(netAmount(report))
+	}
 
-    packagesBilling, _, err := s.c.Billing.GetPackagesBillingUser(ctx, user)
-    if err != nil {
-      // TODO: Handle error
-      continue
-    }
-    currentCharges = AddTo(
-      currentCharges,
-      packagesBilling.TotalPaidGigabytesBandwidthUsed,
-      PRICE_PER_GB,
-    )
+	for _, org := range s.cfg.Service.GitHub.Orgs {
+		report, _, err := s.c.Billing.GetOrganizationUsageReport(ctx, org, opts)
+		if err != nil {
+			return nil, err
+		}
+		charges = charges.Add(netAmount(report))
+	}
 
-    storageBilling, _, err := s.c.Billing.GetStorageBillingUser(ctx, user)
-    if err != nil {
-      // TODO: Handle error
-      continue
-    }
-    currentCharges = AddTo(
-      currentCharges,
-      storageBilling.EstimatedPaidStorageForMonth,
-      PRICE_PER_GB,
-    )
-  }
+	status := new(lib.ServiceStatus)
 
-  for _, org := range s.cfg.Service.GitHub.Orgs {
-    actionBilling, _, err := s.c.Billing.GetActionsBillingOrg(ctx, org)
-    if err != nil {
-      // TODO: Handle error
-      continue
-    }
-    currentCharges = AddTo(
-      currentCharges,
-      actionBilling.TotalPaidMinutesUsed,
-      PRICE_PER_MINUTE,
-    )
+	status.Currency = "USD"
+	status.CurrentCharges = charges.RoundBank(2)
 
-    packagesBilling, _, err := s.c.Billing.GetPackagesBillingOrg(ctx, org)
-    if err != nil {
-      // TODO: Handle error
-      continue
-    }
-    currentCharges = AddTo(
-      currentCharges,
-      packagesBilling.TotalPaidGigabytesBandwidthUsed,
-      PRICE_PER_GB,
-    )
-
-    storageBilling, _, err := s.c.Billing.GetStorageBillingOrg(ctx, org)
-    if err != nil {
-      // TODO: Handle error
-      continue
-    }
-    currentCharges = AddTo(
-      currentCharges,
-      storageBilling.EstimatedPaidStorageForMonth,
-      PRICE_PER_GB,
-    )
-  }
-
-  status := new(lib.ServiceStatus)
-
-  status.AccountBalance = decimal.NewFromInt(0)
-  status.CurrentCharges = currentCharges.RoundBank(2)
-  status.PreviousCharges = decimal.NewFromInt(0)
-
-  return status, nil
+	return status, nil
 }
 
-func AddTo(dec decimal.Decimal, i interface{}, mul decimal.Decimal) (decimal.Decimal) {
-  switch x := i.(type) {
-    case float64:
-      return dec.Add(
-        decimal.NewFromFloat(x).
-          Mul(mul),
-      )
-    case int:
-      return dec.Add(
-        decimal.NewFromInt(int64(x)).
-          Mul(mul),
-      )
-    default:
-      return decimal.Decimal{}
-  }
-}
+func netAmount(report *github.UsageReport) decimal.Decimal {
+	total := decimal.Zero
 
+	for _, item := range report.UsageItems {
+		total = total.Add(decimal.NewFromFloat(item.NetAmount))
+	}
+
+	return total
+}
