@@ -1,186 +1,157 @@
 package claude
 
 import (
-  "context"
-  "encoding/json"
-  "errors"
-  "fmt"
-  "math"
-  "net/http"
-  "os"
-  "path/filepath"
-  "time"
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
-  "github.com/shopspring/decimal"
+	"github.com/shopspring/decimal"
 
-  "xn--gckvb8fzb.com/cloudcash/lib"
+	"xn--gckvb8fzb.com/cloudcash/lib"
 )
 
 // Anthropic does not offer a documented API for subscription (Pro/Max) usage.
 // This is the same endpoint the Claude Code CLI uses for its `/usage` command;
 // it is undocumented and may change without notice.
-const ENDPOINT string = "https://api.anthropic.com/api/oauth/usage"
-const OAUTH_BETA string = "oauth-2025-04-20"
-const USER_AGENT string = "xn--gckvb8fzb.com/cloudcash"
-
-// The endpoint aggressively rate limits requests without a User-Agent.
-const TIMEOUT time.Duration = 15 * time.Second
+const endpoint = "https://api.anthropic.com/api/oauth/usage"
+const oauthBeta = "oauth-2025-04-20"
 
 type Claude struct {
-  cfg        *lib.Config
-  c          *http.Client
+	cfg *lib.Config
+	c   *http.Client
 }
 
 type credentials struct {
-  ClaudeAiOauth      struct {
-    AccessToken      string `json:"accessToken"`
-    ExpiresAt        int64  `json:"expiresAt"`
-  } `json:"claudeAiOauth"`
+	ClaudeAiOauth struct {
+		AccessToken string `json:"accessToken"`
+		ExpiresAt   int64  `json:"expiresAt"`
+	} `json:"claudeAiOauth"`
 }
 
 type window struct {
-  Utilization      float64 `json:"utilization"`
-}
-
-type money struct {
-  AmountMinor      int64   `json:"amount_minor"`
-  Exponent         int32   `json:"exponent"`
+	Utilization float64   `json:"utilization"`
+	ResetsAt    time.Time `json:"resets_at"`
 }
 
 type usage struct {
-  FiveHour           window  `json:"five_hour"`
-  SevenDay           window  `json:"seven_day"`
-  Spend              struct {
-    Used            *money   `json:"used"`
-  } `json:"spend"`
-  ExtraUsage         struct {
-    UsedCredits     *float64 `json:"used_credits"`
-    DecimalPlaces   *int32   `json:"decimal_places"`
-  } `json:"extra_usage"`
+	FiveHour   window `json:"five_hour"`
+	SevenDay   window `json:"seven_day"`
+	ExtraUsage struct {
+		UsedCredits *float64 `json:"used_credits"`
+		Currency    string   `json:"currency"`
+	} `json:"extra_usage"`
 }
 
 func New(config *lib.Config) (*Claude, error) {
-  if config.Service.Claude.Enabled == false {
-    return nil, errors.New("Not enabled")
-  }
+	if !config.Service.Claude.Enabled {
+		return nil, lib.ErrNotConfigured
+	}
 
-  s := new(Claude)
+	s := new(Claude)
 
-  s.cfg = config
-  s.c = &http.Client{Timeout: TIMEOUT}
+	s.cfg = config
+	s.c = lib.NewHTTPClient()
 
-  return s, nil
+	return s, nil
 }
 
-func (s *Claude) GetServiceStatus() (*lib.ServiceStatus, error) {
-  token, err := s.token()
-  if err != nil {
-    return nil, err
-  }
-
-  u, err := s.fetch(token)
-  if err != nil {
-    return nil, err
-  }
-
-  status := new(lib.ServiceStatus)
-
-  status.AccountBalance = decimal.NewFromInt(0)
-  status.CurrentCharges = spent(u)
-  status.PreviousCharges = decimal.NewFromInt(0)
-  status.SessionUsage = decimal.NewFromFloat(u.FiveHour.Utilization)
-  status.WeeklyUsage = decimal.NewFromFloat(u.SevenDay.Utilization)
-
-  return status, nil
+func (s *Claude) UsageOnly() bool {
+	return s.cfg.Service.Claude.UsageOnly
 }
 
-// token returns the OAuth access token, either straight from the configuration
-// or from the credentials file the Claude Code CLI maintains.
-func (s *Claude) token() (string, error) {
-  if s.cfg.Service.Claude.OAuthToken != "" {
-    return s.cfg.Service.Claude.OAuthToken, nil
-  }
+func (s *Claude) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, error) {
+	token, err := s.token(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-  path := s.cfg.Service.Claude.CredentialsFile
-  if path == "" {
-    home, err := os.UserHomeDir()
-    if err != nil {
-      return "", err
-    }
-    path = filepath.Join(home, ".claude", ".credentials.json")
-  }
+	u := new(usage)
+	err = lib.GetJSON(ctx, s.c, endpoint, map[string]string{
+		"Authorization":  "Bearer " + token,
+		"anthropic-beta": oauthBeta,
+	}, u)
+	if err != nil {
+		return nil, err
+	}
 
-  raw, err := os.ReadFile(path)
-  if err != nil {
-    return "", err
-  }
+	status := new(lib.ServiceStatus)
 
-  var creds credentials
-  if err := json.Unmarshal(raw, &creds); err != nil {
-    return "", err
-  }
+	status.CurrentCharges, status.Currency = spent(u)
+	status.SessionUsage = decimal.NewFromFloat(u.FiveHour.Utilization)
+	status.SessionResetsAt = u.FiveHour.ResetsAt.UTC()
+	status.WeeklyUsage = decimal.NewFromFloat(u.SevenDay.Utilization)
+	status.WeeklyResetsAt = u.SevenDay.ResetsAt.UTC()
 
-  if creds.ClaudeAiOauth.AccessToken == "" {
-    return "", fmt.Errorf("No access token in %s", path)
-  }
-
-  // ExpiresAt is a Unix timestamp in milliseconds. Refreshing the token is up
-  // to the Claude Code CLI, cloudcash only reads what's on disk.
-  if creds.ClaudeAiOauth.ExpiresAt > 0 &&
-     time.UnixMilli(creds.ClaudeAiOauth.ExpiresAt).Before(time.Now()) {
-    return "", errors.New("Access token expired")
-  }
-
-  return creds.ClaudeAiOauth.AccessToken, nil
+	return status, nil
 }
 
-func (s *Claude) fetch(token string) (*usage, error) {
-  ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
-  defer cancel()
+func (s *Claude) token(ctx context.Context) (string, error) {
+	token, err := lib.Secret(
+		ctx,
+		s.cfg.Service.Claude.OAuthToken,
+		s.cfg.Service.Claude.OAuthTokenCommand,
+	)
+	if err != nil {
+		return "", err
+	}
+	if token != "" {
+		return token, nil
+	}
 
-  req, err := http.NewRequestWithContext(ctx, http.MethodGet, ENDPOINT, nil)
-  if err != nil {
-    return nil, err
-  }
+	path := s.cfg.Service.Claude.CredentialsFile
+	if path == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		path = filepath.Join(home, ".claude", ".credentials.json")
+	}
 
-  req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
-  req.Header.Set("anthropic-beta", OAUTH_BETA)
-  req.Header.Set("User-Agent", USER_AGENT)
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
 
-  resp, err := s.c.Do(req)
-  if err != nil {
-    return nil, err
-  }
-  defer resp.Body.Close()
+	var creds credentials
+	if err := json.Unmarshal(raw, &creds); err != nil {
+		return "", err
+	}
 
-  if resp.StatusCode != http.StatusOK {
-    return nil, fmt.Errorf("%s returned %s", ENDPOINT, resp.Status)
-  }
+	if creds.ClaudeAiOauth.AccessToken == "" {
+		return "", fmt.Errorf("no access token in %s", path)
+	}
 
-  u := new(usage)
-  if err := json.NewDecoder(resp.Body).Decode(u); err != nil {
-    return nil, err
-  }
+	// ExpiresAt is a Unix timestamp in milliseconds. Refreshing the token is up
+	// to the Claude Code CLI, cloudcash only reads what's on disk.
+	if creds.ClaudeAiOauth.ExpiresAt > 0 &&
+		time.UnixMilli(creds.ClaudeAiOauth.ExpiresAt).Before(time.Now()) {
+		return "", errors.New("access token expired")
+	}
 
-  return u, nil
+	return creds.ClaudeAiOauth.AccessToken, nil
 }
 
-// spent returns the usage credits consumed so far. `spend.used` is the current
-// shape; `extra_usage.used_credits` is the older one and is kept as a fallback.
-func spent(u *usage) (decimal.Decimal) {
-  if u.Spend.Used != nil {
-    return decimal.New(u.Spend.Used.AmountMinor, -u.Spend.Used.Exponent)
-  }
+func spent(u *usage) (decimal.Decimal, string) {
+	if u.ExtraUsage.UsedCredits == nil {
+		return decimal.Zero, ""
+	}
 
-  if u.ExtraUsage.UsedCredits != nil {
-    var places int32 = 0
-    if u.ExtraUsage.DecimalPlaces != nil {
-      places = *u.ExtraUsage.DecimalPlaces
-    }
-    return decimal.NewFromFloat(
-      *u.ExtraUsage.UsedCredits / math.Pow(10, float64(places)),
-    )
-  }
+	currency := strings.ToUpper(u.ExtraUsage.Currency)
+	if currency == "" {
+		currency = "USD"
+	}
 
-  return decimal.NewFromInt(0)
+	var places int32 = 2
+	switch currency {
+	case "JPY", "KRW", "VND":
+		places = 0
+	}
+
+	return decimal.NewFromFloat(*u.ExtraUsage.UsedCredits).Shift(-places), currency
 }
