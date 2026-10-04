@@ -10,6 +10,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/progrium/darwinkit/dispatch"
 	"github.com/progrium/darwinkit/macos/appkit"
 	"github.com/progrium/darwinkit/macos/foundation"
 	"github.com/progrium/darwinkit/objc"
@@ -22,15 +23,14 @@ func init() {
 }
 
 func Run(c *cloud.Cloud, t *template.Template) {
-	appkit.TerminateAfterWindowsClose = false
-
 	app := appkit.Application_SharedApplication()
 
 	app.SetActivationPolicy(appkit.ApplicationActivationPolicyAccessory)
 
 	var statusItem appkit.StatusItem
 
-	app.SetDidFinishLaunching(func(notification foundation.Notification) {
+	delegate := &appkit.ApplicationDelegate{}
+	delegate.SetApplicationDidFinishLaunching(func(notification foundation.Notification) {
 		statusBar := appkit.StatusBar_SystemStatusBar()
 		statusItem = statusBar.StatusItemWithLength(appkit.VariableStatusItemLength)
 		statusItem.Retain()
@@ -45,7 +45,7 @@ func Run(c *cloud.Cloud, t *template.Template) {
 				if err != nil {
 					fmt.Fprintln(os.Stderr, err)
 				} else {
-					foundation.Dispatch(func() {
+					dispatch.MainQueue().DispatchAsync(func() {
 						button.SetTitle(title)
 					})
 				}
@@ -56,15 +56,16 @@ func Run(c *cloud.Cloud, t *template.Template) {
 
 		menu := appkit.NewMenu()
 
-		itemQuit := appkit.NewMenuItemWithAction(
+		itemQuit := appkit.NewMenuItemWithSelector(
 			"Quit",
-			objc.Sel("terminate:"),
 			"",
+			objc.Sel("terminate:"),
 		)
 
 		menu.AddItem(itemQuit)
 		statusItem.SetMenu(menu)
 	})
+	app.SetDelegate(delegate)
 
 	app.ActivateIgnoringOtherApps(true)
 	app.Run()
