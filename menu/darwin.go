@@ -1,10 +1,12 @@
 //go:build darwin
-// +build darwin
 
 package menu
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"runtime"
 	"text/template"
 	"time"
 
@@ -14,6 +16,10 @@ import (
 
 	"xn--gckvb8fzb.com/cloudcash/cloud"
 )
+
+func init() {
+	runtime.LockOSThread()
+}
 
 func Run(c *cloud.Cloud, t *template.Template) {
 	appkit.TerminateAfterWindowsClose = false
@@ -33,14 +39,18 @@ func Run(c *cloud.Cloud, t *template.Template) {
 
 		go func() {
 			for {
-				fmt.Println("Updating menu ...")
-				foundation.Dispatch(func() {
-					button.SetTitle(c.MenuText(t))
-				})
-				fmt.Println("Sleeping ...")
+				c.RefreshAll(context.Background(), os.Stderr)
+
+				title, err := c.MenuText(t)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+				} else {
+					foundation.Dispatch(func() {
+						button.SetTitle(title)
+					})
+				}
+
 				time.Sleep(time.Hour)
-				fmt.Println("Refreshing ...")
-				c.RefreshAll()
 			}
 		}()
 
@@ -56,8 +66,6 @@ func Run(c *cloud.Cloud, t *template.Template) {
 		statusItem.SetMenu(menu)
 	})
 
-	fmt.Println("Running menu bar widget ..")
 	app.ActivateIgnoringOtherApps(true)
 	app.Run()
-	fmt.Println("Ended menu bar widget")
 }
