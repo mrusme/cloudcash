@@ -2,50 +2,50 @@ package vultr
 
 import (
 	"context"
-	"errors"
 
 	"github.com/shopspring/decimal"
 	"github.com/vultr/govultr/v3"
-
-	"golang.org/x/oauth2"
 
 	"xn--gckvb8fzb.com/cloudcash/lib"
 )
 
 type Vultr struct {
-	ctx       context.Context
-	oauth2cfg oauth2.Config
-	c         *govultr.Client
+	c *govultr.Client
 }
 
 func New(config *lib.Config) (*Vultr, error) {
-	if config.Service.Vultr.APIKey == "" {
-		return nil, errors.New("No API key")
+	apiKey, err := lib.Secret(
+		context.Background(),
+		config.Service.Vultr.APIKey,
+		config.Service.Vultr.APIKeyCommand,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if apiKey == "" {
+		return nil, lib.ErrNotConfigured
 	}
 
 	s := new(Vultr)
 
-	s.ctx = context.Background()
-	s.oauth2cfg = oauth2.Config{}
-	ts := s.oauth2cfg.TokenSource(s.ctx, &oauth2.Token{AccessToken: config.Service.Vultr.APIKey})
-	s.c = govultr.NewClient(oauth2.NewClient(s.ctx, ts))
-	s.c.SetUserAgent("xn--gckvb8fzb.com/cloudcash")
+	s.c = govultr.NewClient(lib.NewBearerHTTPClient(apiKey))
+	s.c.SetUserAgent(lib.UserAgent)
 
 	return s, nil
 }
 
-func (s *Vultr) GetServiceStatus() (*lib.ServiceStatus, error) {
-	account, _, err := s.c.Account.Get(s.ctx)
+func (s *Vultr) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, error) {
+	account, _, err := s.c.Account.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	status := new(lib.ServiceStatus)
 
-	status.AccountBalance = decimal.NewFromFloat32(account.Balance * -1.0)
+	status.Currency = "USD"
+	status.AccountBalance = decimal.NewFromFloat32(-account.Balance)
 	status.CurrentCharges = decimal.NewFromFloat32(account.PendingCharges)
-	status.PreviousCharges = decimal.NewFromFloat32(account.LastPaymentAmount).
-		Mul(decimal.NewFromInt(-1))
+	status.PreviousCharges = decimal.NewFromFloat32(-account.LastPaymentAmount)
 
 	return status, nil
 }
