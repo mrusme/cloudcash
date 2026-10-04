@@ -1,44 +1,56 @@
 package digitalocean
 
 import (
-  "context"
-  "errors"
+	"context"
 
-  "github.com/shopspring/decimal"
-  "github.com/digitalocean/godo"
+	"github.com/digitalocean/godo"
+	"github.com/shopspring/decimal"
 
-  "xn--gckvb8fzb.com/cloudcash/lib"
+	"xn--gckvb8fzb.com/cloudcash/lib"
 )
 
 type DigitalOcean struct {
-  c          *godo.Client
+	c *godo.Client
 }
 
 func New(config *lib.Config) (*DigitalOcean, error) {
-  if config.Service.DigitalOcean.APIKey == "" {
-    return nil, errors.New("No API key")
-  }
+	apiKey, err := lib.Secret(
+		context.Background(),
+		config.Service.DigitalOcean.APIKey,
+		config.Service.DigitalOcean.APIKeyCommand,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if apiKey == "" {
+		return nil, lib.ErrNotConfigured
+	}
 
-  s := new(DigitalOcean)
-  s.c = godo.NewFromToken(config.Service.DigitalOcean.APIKey)
+	s := new(DigitalOcean)
+	s.c = godo.NewClient(lib.NewBearerHTTPClient(apiKey))
 
-  return s, nil
+	return s, nil
 }
 
-func (s *DigitalOcean) GetServiceStatus() (*lib.ServiceStatus, error) {
-  ctx := context.Background()
-  balance, _, err := s.c.Balance.Get(ctx)
-  if err != nil {
-    return nil, err
-  }
+func (s *DigitalOcean) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, error) {
+	balance, _, err := s.c.Balance.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-  status := new(lib.ServiceStatus)
+	status := new(lib.ServiceStatus)
 
-  status.AccountBalance, _ = decimal.NewFromString(balance.AccountBalance)
-  status.CurrentCharges, _ = decimal.NewFromString(balance.MonthToDateUsage)
-  status.PreviousCharges, _ = decimal.NewFromString("0.0")
+	status.Currency = "USD"
 
-  return status, nil
+	status.AccountBalance, err = decimal.NewFromString(balance.AccountBalance)
+	if err != nil {
+		return nil, err
+	}
+
+	status.CurrentCharges, err = decimal.NewFromString(balance.MonthToDateUsage)
+	if err != nil {
+		return nil, err
+	}
+
+	return status, nil
 }
-
-
