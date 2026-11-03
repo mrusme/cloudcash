@@ -294,6 +294,12 @@ cloudcash -menu-mode
 
 Alternatively set `Menu.IsDefault` to `true` in configuration.
 
+### Version
+
+```sh
+cloudcash -version
+```
+
 ### Errors
 
 Errors are printed to stderr, with text and JSON output exiting with 1 when a

@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime/debug"
 
 	"xn--gckvb8fzb.com/cloudcash/cloud"
 	"xn--gckvb8fzb.com/cloudcash/cloud/aws"
@@ -23,7 +24,7 @@ func main() {
 }
 
 func run() int {
-	var jsonOut, waybarPango, menuMode bool
+	var jsonOut, waybarPango, menuMode, showVersion bool
 
 	flag.BoolVar(
 		&jsonOut,
@@ -43,7 +44,18 @@ func run() int {
 		false,
 		"Run as menubar app (only on macOS)",
 	)
+	flag.BoolVar(
+		&showVersion,
+		"version",
+		false,
+		"Print the version",
+	)
 	flag.Parse()
+
+	if showVersion {
+		fmt.Println("cloudcash", version())
+		return 0
+	}
 
 	config, err := lib.Cfg()
 	if err != nil {
@@ -140,6 +152,15 @@ func openCache() *lib.Cache {
 	}
 
 	return cache
+}
+
+func version() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "unknown"
+	}
+
+	return info.Main.Version
 }
 
 func fail(err error) int {
