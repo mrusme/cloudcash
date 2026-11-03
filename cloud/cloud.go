@@ -94,6 +94,7 @@ func (c *Cloud) RefreshAll(ctx context.Context, stderr io.Writer) (failed bool) 
 		}
 
 		failed = true
+		service.Status = nil
 		fmt.Fprintf(stderr, "%s: %v\n", service.ID, result.err)
 	}
 

@@ -6,6 +6,8 @@ builds:
     id: darwin
     env:
       - CGO_ENABLED=1
+    ldflags:
+      - -s -w
     goos:
       - darwin
     goarch:
@@ -16,6 +18,8 @@ builds:
     id: others
     env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w
     targets:
       - aix_ppc64
       - android_arm64

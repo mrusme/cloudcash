@@ -3,6 +3,7 @@
 package menu
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"os"
@@ -17,6 +18,8 @@ import (
 
 	"xn--gckvb8fzb.com/cloudcash/cloud"
 )
+
+const fallbackTitle = "cloudcash"
 
 func init() {
 	runtime.LockOSThread()
@@ -36,6 +39,7 @@ func Run(c *cloud.Cloud, t *template.Template) {
 		statusItem.Retain()
 
 		button := statusItem.Button()
+		button.SetTitle(fallbackTitle)
 
 		go func() {
 			for {
@@ -46,7 +50,7 @@ func Run(c *cloud.Cloud, t *template.Template) {
 					fmt.Fprintln(os.Stderr, err)
 				} else {
 					dispatch.MainQueue().DispatchAsync(func() {
-						button.SetTitle(title)
+						button.SetTitle(cmp.Or(title, fallbackTitle))
 					})
 				}
 

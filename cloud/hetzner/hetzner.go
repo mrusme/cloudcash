@@ -28,32 +28,50 @@ type month struct {
 }
 
 func New(config *lib.Config) (*Hetzner, error) {
-	apiKey, err := lib.Secret(
-		context.Background(),
+	if !lib.HasSecret(
 		config.Service.Hetzner.APIKey,
 		config.Service.Hetzner.APIKeyCommand,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if apiKey == "" {
+	) {
 		return nil, lib.ErrNotConfigured
 	}
 
 	s := new(Hetzner)
 
 	s.cfg = config
-	s.c = hcloud.NewClient(
-		hcloud.WithToken(apiKey),
-		hcloud.WithApplication("cloudcash", lib.UserAgent),
-		hcloud.WithHTTPClient(lib.NewHTTPClient()),
-	)
 
 	return s, nil
 }
 
+func (s *Hetzner) client(ctx context.Context) (*hcloud.Client, error) {
+	if s.c != nil {
+		return s.c, nil
+	}
+
+	apiKey, err := lib.Secret(
+		ctx,
+		s.cfg.Service.Hetzner.APIKey,
+		s.cfg.Service.Hetzner.APIKeyCommand,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	s.c = hcloud.NewClient(
+		hcloud.WithToken(apiKey),
+		hcloud.WithApplication(lib.UserAgent, ""),
+		hcloud.WithHTTPClient(lib.NewHTTPClient()),
+	)
+
+	return s.c, nil
+}
+
 func (s *Hetzner) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, error) {
-	pricing, err := s.pricing(ctx)
+	c, err := s.client(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	pricing, err := s.pricing(ctx, c)
 	if err != nil {
 		return nil, err
 	}
@@ -62,31 +80,31 @@ func (s *Hetzner) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, err
 
 	charges := decimal.Zero
 
-	servers, err := s.servers(ctx, &pricing, m)
+	servers, err := s.servers(ctx, c, &pricing, m)
 	if err != nil {
 		return nil, err
 	}
 	charges = charges.Add(servers)
 
-	balancers, err := s.loadBalancers(ctx, &pricing, m)
+	balancers, err := s.loadBalancers(ctx, c, &pricing, m)
 	if err != nil {
 		return nil, err
 	}
 	charges = charges.Add(balancers)
 
-	volumes, err := s.volumes(ctx, &pricing, m)
+	volumes, err := s.volumes(ctx, c, &pricing, m)
 	if err != nil {
 		return nil, err
 	}
 	charges = charges.Add(volumes)
 
-	primaryIPs, err := s.primaryIPs(ctx, &pricing, m)
+	primaryIPs, err := s.primaryIPs(ctx, c, &pricing, m)
 	if err != nil {
 		return nil, err
 	}
 	charges = charges.Add(primaryIPs)
 
-	floatingIPs, err := s.floatingIPs(ctx, &pricing, m)
+	floatingIPs, err := s.floatingIPs(ctx, c, &pricing, m)
 	if err != nil {
 		return nil, err
 	}
@@ -100,14 +118,14 @@ func (s *Hetzner) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, err
 	return status, nil
 }
 
-func (s *Hetzner) pricing(ctx context.Context) (schema.Pricing, error) {
-	req, err := s.c.NewRequest(ctx, http.MethodGet, "/pricing", nil)
+func (s *Hetzner) pricing(ctx context.Context, c *hcloud.Client) (schema.Pricing, error) {
+	req, err := c.NewRequest(ctx, http.MethodGet, "/pricing", nil)
 	if err != nil {
 		return schema.Pricing{}, err
 	}
 
 	var body schema.PricingGetResponse
-	if _, err := s.c.Do(req, &body); err != nil {
+	if _, err := c.Do(req, &body); err != nil {
 		return schema.Pricing{}, err
 	}
 
@@ -116,12 +134,13 @@ func (s *Hetzner) pricing(ctx context.Context) (schema.Pricing, error) {
 
 func (s *Hetzner) servers(
 	ctx context.Context,
+	c *hcloud.Client,
 	pricing *schema.Pricing,
 	m month,
 ) (decimal.Decimal, error) {
 	charges := decimal.Zero
 
-	servers, err := s.c.Server.All(ctx)
+	servers, err := c.Server.All(ctx)
 	if err != nil {
 		return charges, err
 	}
@@ -161,12 +180,13 @@ func (s *Hetzner) servers(
 
 func (s *Hetzner) loadBalancers(
 	ctx context.Context,
+	c *hcloud.Client,
 	pricing *schema.Pricing,
 	m month,
 ) (decimal.Decimal, error) {
 	charges := decimal.Zero
 
-	balancers, err := s.c.LoadBalancer.All(ctx)
+	balancers, err := c.LoadBalancer.All(ctx)
 	if err != nil {
 		return charges, err
 	}
@@ -202,12 +222,13 @@ func (s *Hetzner) loadBalancers(
 
 func (s *Hetzner) volumes(
 	ctx context.Context,
+	c *hcloud.Client,
 	pricing *schema.Pricing,
 	m month,
 ) (decimal.Decimal, error) {
 	charges := decimal.Zero
 
-	volumes, err := s.c.Volume.All(ctx)
+	volumes, err := c.Volume.All(ctx)
 	if err != nil {
 		return charges, err
 	}
@@ -224,12 +245,13 @@ func (s *Hetzner) volumes(
 
 func (s *Hetzner) primaryIPs(
 	ctx context.Context,
+	c *hcloud.Client,
 	pricing *schema.Pricing,
 	m month,
 ) (decimal.Decimal, error) {
 	charges := decimal.Zero
 
-	ips, err := s.c.PrimaryIP.All(ctx)
+	ips, err := c.PrimaryIP.All(ctx)
 	if err != nil {
 		return charges, err
 	}
@@ -253,12 +275,13 @@ func (s *Hetzner) primaryIPs(
 
 func (s *Hetzner) floatingIPs(
 	ctx context.Context,
+	c *hcloud.Client,
 	pricing *schema.Pricing,
 	m month,
 ) (decimal.Decimal, error) {
 	charges := decimal.Zero
 
-	ips, err := s.c.FloatingIP.All(ctx)
+	ips, err := c.FloatingIP.All(ctx)
 	if err != nil {
 		return charges, err
 	}

@@ -7,14 +7,22 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 )
+
+func HasSecret(value string, command string) bool {
+	return value != "" || command != ""
+}
 
 func Secret(ctx context.Context, value string, command string) (string, error) {
 	if value != "" || command == "" {
 		return value, nil
 	}
 
-	out, err := shellCommand(ctx, command).Output()
+	cmd := shellCommand(ctx, command)
+	cmd.WaitDelay = time.Second
+
+	out, err := cmd.Output()
 	if err != nil {
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) && len(bytes.TrimSpace(exitErr.Stderr)) > 0 {

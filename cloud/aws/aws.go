@@ -18,48 +18,65 @@ import (
 const metric = "UnblendedCost"
 
 type AWS struct {
-	c *costexplorer.Client
+	cfg *lib.Config
+	c   *costexplorer.Client
 }
 
 func New(config *lib.Config) (*AWS, error) {
 	if config.Service.AWS.AWSAccessKeyID == "" ||
-		config.Service.AWS.Region == "" {
-		return nil, lib.ErrNotConfigured
-	}
-
-	secretAccessKey, err := lib.Secret(
-		context.Background(),
-		config.Service.AWS.AWSSecretAccessKey,
-		config.Service.AWS.AWSSecretAccessKeyCommand,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if secretAccessKey == "" {
+		config.Service.AWS.Region == "" ||
+		!lib.HasSecret(
+			config.Service.AWS.AWSSecretAccessKey,
+			config.Service.AWS.AWSSecretAccessKeyCommand,
+		) {
 		return nil, lib.ErrNotConfigured
 	}
 
 	s := new(AWS)
 
+	s.cfg = config
+
+	return s, nil
+}
+
+func (s *AWS) client(ctx context.Context) (*costexplorer.Client, error) {
+	if s.c != nil {
+		return s.c, nil
+	}
+
+	secretAccessKey, err := lib.Secret(
+		ctx,
+		s.cfg.Service.AWS.AWSSecretAccessKey,
+		s.cfg.Service.AWS.AWSSecretAccessKeyCommand,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	s.c = costexplorer.NewFromConfig(aws.Config{
-		Region: config.Service.AWS.Region,
+		Region: s.cfg.Service.AWS.Region,
 		Credentials: credentials.NewStaticCredentialsProvider(
-			config.Service.AWS.AWSAccessKeyID,
+			s.cfg.Service.AWS.AWSAccessKeyID,
 			secretAccessKey,
 			"",
 		),
 		HTTPClient: lib.NewHTTPClient(),
 	})
 
-	return s, nil
+	return s.c, nil
 }
 
 func (s *AWS) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, error) {
+	c, err := s.client(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	now := time.Now().UTC()
 	currentMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 	previousMonth := currentMonth.AddDate(0, -1, 0)
 
-	result, err := s.c.GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
+	result, err := c.GetCostAndUsage(ctx, &costexplorer.GetCostAndUsageInput{
 		TimePeriod: &types.DateInterval{
 			Start: aws.String(previousMonth.Format(time.DateOnly)),
 			End:   aws.String(now.AddDate(0, 0, 1).Format(time.DateOnly)),

@@ -16,27 +16,45 @@ type GitHub struct {
 }
 
 func New(config *lib.Config) (*GitHub, error) {
-	apiKey, err := lib.Secret(
-		context.Background(),
+	if !lib.HasSecret(
 		config.Service.GitHub.APIKey,
 		config.Service.GitHub.APIKeyCommand,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if apiKey == "" {
+	) {
 		return nil, lib.ErrNotConfigured
 	}
 
 	s := new(GitHub)
 
 	s.cfg = config
-	s.c = github.NewClient(lib.NewHTTPClient()).WithAuthToken(apiKey)
 
 	return s, nil
 }
 
+func (s *GitHub) client(ctx context.Context) (*github.Client, error) {
+	if s.c != nil {
+		return s.c, nil
+	}
+
+	apiKey, err := lib.Secret(
+		ctx,
+		s.cfg.Service.GitHub.APIKey,
+		s.cfg.Service.GitHub.APIKeyCommand,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	s.c = github.NewClient(lib.NewHTTPClient()).WithAuthToken(apiKey)
+
+	return s.c, nil
+}
+
 func (s *GitHub) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, error) {
+	c, err := s.client(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	now := time.Now().UTC()
 	opts := &github.UsageReportOptions{
 		Year:  github.Ptr(now.Year()),
@@ -46,7 +64,7 @@ func (s *GitHub) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, erro
 	charges := decimal.Zero
 
 	for _, user := range s.cfg.Service.GitHub.Users {
-		report, _, err := s.c.Billing.GetUsageReport(ctx, user, opts)
+		report, _, err := c.Billing.GetUsageReport(ctx, user, opts)
 		if err != nil {
 			return nil, err
 		}
@@ -54,7 +72,7 @@ func (s *GitHub) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, erro
 	}
 
 	for _, org := range s.cfg.Service.GitHub.Orgs {
-		report, _, err := s.c.Billing.GetOrganizationUsageReport(ctx, org, opts)
+		report, _, err := c.Billing.GetOrganizationUsageReport(ctx, org, opts)
 		if err != nil {
 			return nil, err
 		}

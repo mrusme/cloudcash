@@ -10,30 +10,50 @@ import (
 )
 
 type DigitalOcean struct {
-	c *godo.Client
+	cfg *lib.Config
+	c   *godo.Client
 }
 
 func New(config *lib.Config) (*DigitalOcean, error) {
-	apiKey, err := lib.Secret(
-		context.Background(),
+	if !lib.HasSecret(
 		config.Service.DigitalOcean.APIKey,
 		config.Service.DigitalOcean.APIKeyCommand,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if apiKey == "" {
+	) {
 		return nil, lib.ErrNotConfigured
 	}
 
 	s := new(DigitalOcean)
-	s.c = godo.NewClient(lib.NewBearerHTTPClient(apiKey))
+	s.cfg = config
 
 	return s, nil
 }
 
+func (s *DigitalOcean) client(ctx context.Context) (*godo.Client, error) {
+	if s.c != nil {
+		return s.c, nil
+	}
+
+	apiKey, err := lib.Secret(
+		ctx,
+		s.cfg.Service.DigitalOcean.APIKey,
+		s.cfg.Service.DigitalOcean.APIKeyCommand,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	s.c = godo.NewClient(lib.NewBearerHTTPClient(apiKey))
+
+	return s.c, nil
+}
+
 func (s *DigitalOcean) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, error) {
-	balance, _, err := s.c.Balance.Get(ctx)
+	c, err := s.client(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	balance, _, err := c.Balance.Get(ctx)
 	if err != nil {
 		return nil, err
 	}

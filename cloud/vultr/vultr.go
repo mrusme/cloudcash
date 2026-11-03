@@ -10,32 +10,52 @@ import (
 )
 
 type Vultr struct {
-	c *govultr.Client
+	cfg *lib.Config
+	c   *govultr.Client
 }
 
 func New(config *lib.Config) (*Vultr, error) {
-	apiKey, err := lib.Secret(
-		context.Background(),
+	if !lib.HasSecret(
 		config.Service.Vultr.APIKey,
 		config.Service.Vultr.APIKeyCommand,
-	)
-	if err != nil {
-		return nil, err
-	}
-	if apiKey == "" {
+	) {
 		return nil, lib.ErrNotConfigured
 	}
 
 	s := new(Vultr)
 
-	s.c = govultr.NewClient(lib.NewBearerHTTPClient(apiKey))
-	s.c.SetUserAgent(lib.UserAgent)
+	s.cfg = config
 
 	return s, nil
 }
 
+func (s *Vultr) client(ctx context.Context) (*govultr.Client, error) {
+	if s.c != nil {
+		return s.c, nil
+	}
+
+	apiKey, err := lib.Secret(
+		ctx,
+		s.cfg.Service.Vultr.APIKey,
+		s.cfg.Service.Vultr.APIKeyCommand,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	s.c = govultr.NewClient(lib.NewBearerHTTPClient(apiKey))
+	s.c.SetUserAgent(lib.UserAgent)
+
+	return s.c, nil
+}
+
 func (s *Vultr) GetServiceStatus(ctx context.Context) (*lib.ServiceStatus, error) {
-	account, _, err := s.c.Account.Get(ctx)
+	c, err := s.client(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	account, _, err := c.Account.Get(ctx)
 	if err != nil {
 		return nil, err
 	}
